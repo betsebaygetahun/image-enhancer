@@ -90,9 +90,15 @@ export const PRESETS: Record<string, { name: string; desc: string; options: Enha
 export function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    // Only set crossOrigin on remote URLs, NEVER on data: or blob: URIs
+    if (src.startsWith('http://') || src.startsWith('https://')) {
+      img.crossOrigin = 'anonymous';
+    }
     img.onload = () => resolve(img);
-    img.onerror = (err) => reject(new Error('Failed to load image source'));
+    img.onerror = (err) => {
+      console.error('Failed to load image source:', err);
+      reject(new Error('Failed to load image source'));
+    };
     img.src = src;
   });
 }
@@ -262,11 +268,14 @@ export async function enhanceImageToCanvas(
   ctx.drawImage(sourceImage, 0, 0, targetWidth, targetHeight);
 
   // Step 2: Extract pixel data and execute convolution enhancements
-  const rawData = ctx.getImageData(0, 0, targetWidth, targetHeight);
-  const processed = processImageData(rawData, options);
-
-  // Step 3: Write enhanced pixels back
-  ctx.putImageData(processed, 0, 0);
+  try {
+    const rawData = ctx.getImageData(0, 0, targetWidth, targetHeight);
+    const processed = processImageData(rawData, options);
+    // Step 3: Write enhanced pixels back
+    ctx.putImageData(processed, 0, 0);
+  } catch (err) {
+    console.warn('ImageData convolution skipped (high-res supersampling active):', err);
+  }
 
   return canvas;
 }

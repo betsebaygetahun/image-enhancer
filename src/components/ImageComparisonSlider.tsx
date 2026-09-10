@@ -30,7 +30,11 @@ export const ImageComparisonSlider: React.FC<Props> = ({
   // Sync enhanced canvas to dataURL for rendering
   useEffect(() => {
     if (enhancedCanvas) {
-      setEnhancedDataUrl(enhancedCanvas.toDataURL('image/png'));
+      try {
+        setEnhancedDataUrl(enhancedCanvas.toDataURL('image/png'));
+      } catch (err) {
+        console.warn('Could not generate dataURL from enhancedCanvas:', err);
+      }
     }
   }, [enhancedCanvas]);
 

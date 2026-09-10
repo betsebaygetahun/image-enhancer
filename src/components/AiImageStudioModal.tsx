@@ -119,10 +119,13 @@ export const AiImageStudioModal: React.FC<Props> = ({
   const handleDownloadImage = async (imgUrl: string, id: string) => {
     try {
       const img = new Image();
-      img.crossOrigin = 'anonymous';
+      if (imgUrl.startsWith('http://') || imgUrl.startsWith('https://')) {
+        img.crossOrigin = 'anonymous';
+      }
       img.src = imgUrl;
-      await new Promise((resolve) => {
+      await new Promise((resolve, reject) => {
         img.onload = resolve;
+        img.onerror = reject;
       });
       const canvas = document.createElement('canvas');
       canvas.width = img.naturalWidth;

@@ -284,5 +284,14 @@ export function generateDefaultImage(): string {
 </svg>
 `;
 
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+  try {
+    if (typeof window !== 'undefined' && typeof window.btoa === 'function') {
+      const base64 = window.btoa(unescape(encodeURIComponent(svg)));
+      return `data:image/svg+xml;base64,${base64}`;
+    }
+  } catch (e) {
+    // fallback
+  }
+
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }

@@ -50,7 +50,14 @@ app.post('/api/images/enhance', async (req, res) => {
     }
 
     // Clean base64 string if it contains data URI prefix
-    const cleanBase64 = imageBase64.replace(/^data:image\/[a-zA-Z]+;base64,/, '');
+    const cleanBase64 = imageBase64.replace(/^data:image\/[^;]+;base64,/, '');
+
+    // Detect MIME type if in data URI
+    let detectedMime = mimeType || 'image/jpeg';
+    const mimeMatch = imageBase64.match(/^data:(image\/[^;]+);base64,/);
+    if (mimeMatch && mimeMatch[1]) {
+      detectedMime = mimeMatch[1];
+    }
 
     const basePrompt = `Enhance the uploaded image to the highest possible quality and resolution. Keep the image 100% identical to the original. Do not change, add, remove, replace, or rearrange anything. Preserve the exact composition, people, faces, facial features, expressions, clothing, colors, background, text, objects, lighting, and proportions. Only improve technical quality: increase sharpness, clarity, resolution, and fine details; reduce noise, blur, pixelation, and compression artifacts. Make it look clean, crisp, and professionally high-resolution while maintaining the exact original appearance. No creative alterations or AI-generated changes.`;
     const prompt = customInstructions ? `${basePrompt}\nAdditional detail focus: ${customInstructions}` : basePrompt;
@@ -68,7 +75,7 @@ app.post('/api/images/enhance', async (req, res) => {
             {
               inlineData: {
                 data: cleanBase64,
-                mimeType: mimeType || 'image/jpeg',
+                mimeType: detectedMime,
               },
             },
             {
@@ -118,7 +125,7 @@ app.post('/api/images/enhance', async (req, res) => {
             {
               inlineData: {
                 data: cleanBase64,
-                mimeType: mimeType || 'image/jpeg',
+                mimeType: detectedMime,
               },
             },
             {
@@ -151,8 +158,13 @@ app.post('/api/images/enhance', async (req, res) => {
     }
   } catch (error: any) {
     console.error('Enhancement error:', error);
-    res.status(500).json({
-      error: error?.message || 'Failed to enhance image with AI model',
+    const msg = error?.message || 'Failed to enhance image with AI model';
+    const isQuota = msg.includes('RESOURCE_EXHAUSTED') || msg.includes('429') || msg.includes('quota');
+    res.status(isQuota ? 429 : 500).json({
+      error: isQuota
+        ? 'Gemini Cloud image quota exhausted for this API key. Using local 4K Ultra-Sharp super-resolution pipeline.'
+        : msg,
+      isQuotaExceeded: isQuota,
     });
   }
 });
@@ -173,7 +185,14 @@ app.post('/api/images/edit', async (req, res) => {
       });
     }
 
-    const cleanBase64 = imageBase64.replace(/^data:image\/[a-zA-Z]+;base64,/, '');
+    const cleanBase64 = imageBase64.replace(/^data:image\/[^;]+;base64,/, '');
+
+    // Detect MIME type if in data URI
+    let detectedMime = mimeType || 'image/jpeg';
+    const mimeMatch = imageBase64.match(/^data:(image\/[^;]+);base64,/);
+    if (mimeMatch && mimeMatch[1]) {
+      detectedMime = mimeMatch[1];
+    }
 
     const targetSize: '512px' | '1K' | '2K' | '4K' =
       resolution === '4K' ? '4K' : resolution === '1K' ? '1K' : '2K';
@@ -185,7 +204,7 @@ app.post('/api/images/edit', async (req, res) => {
           {
             inlineData: {
               data: cleanBase64,
-              mimeType: mimeType || 'image/jpeg',
+              mimeType: detectedMime,
             },
           },
           {
@@ -229,8 +248,13 @@ app.post('/api/images/edit', async (req, res) => {
     });
   } catch (error: any) {
     console.error('Edit error:', error);
-    res.status(500).json({
-      error: error?.message || 'Failed to edit image',
+    const msg = error?.message || 'Failed to edit image';
+    const isQuota = msg.includes('RESOURCE_EXHAUSTED') || msg.includes('429') || msg.includes('quota');
+    res.status(isQuota ? 429 : 500).json({
+      error: isQuota
+        ? 'Gemini Cloud image quota exhausted for this API key. Provide a paid API key or use the 4K Ultra-Sharp Enhancer.'
+        : msg,
+      isQuotaExceeded: isQuota,
     });
   }
 });
@@ -295,8 +319,13 @@ app.post('/api/images/generate', async (req, res) => {
     });
   } catch (error: any) {
     console.error('Generate error:', error);
-    res.status(500).json({
-      error: error?.message || 'Failed to generate image',
+    const msg = error?.message || 'Failed to generate image';
+    const isQuota = msg.includes('RESOURCE_EXHAUSTED') || msg.includes('429') || msg.includes('quota');
+    res.status(isQuota ? 429 : 500).json({
+      error: isQuota
+        ? 'Gemini Cloud image quota exhausted for this API key. Provide a paid API key or use the 4K Ultra-Sharp Enhancer.'
+        : msg,
+      isQuotaExceeded: isQuota,
     });
   }
 });

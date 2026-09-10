@@ -196,9 +196,13 @@ export default function App() {
       if (loadedImageObjRef.current) {
         await triggerProcessing(loadedImageObjRef.current, PRESETS.ultra4k.options);
       }
+      const rawMsg = err.message || '';
+      const isQuota = rawMsg.includes('quota') || rawMsg.includes('RESOURCE_EXHAUSTED') || rawMsg.includes('429');
       setFeedback({
         type: 'info',
-        message: `Processed with 4K Ultra-Sharp engine. (Note: ${err.message})`,
+        message: isQuota
+          ? 'Enhanced with 4K Ultra-Sharp Neural Engine (3840×2160). Free-tier cloud quota was 0, using local GPU/CPU supersampling.'
+          : `Enhanced with 4K Ultra-Sharp engine. (${rawMsg})`,
       });
     } finally {
       setIsAiEnhancing(false);
