@@ -1,0 +1,6 @@
+{
+  "name": "UltraHD Image Enhancer & Studio",
+  "description": "Enhance images to 4K ultra-sharp quality with noise reduction, clarity, and resolution boost, plus AI creation and editing powered by Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
